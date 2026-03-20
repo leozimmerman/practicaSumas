@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Practica de Sumas</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+    }
+
+    .container {
+      text-align: center;
+      padding: 40px 20px;
+      max-width: 480px;
+      width: 100%;
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 8px;
+      color: #e94560;
+    }
+
+    .subtitle {
+      color: #a8b2d8;
+      margin-bottom: 40px;
+      font-size: 0.95rem;
+    }
+
+    /* Score & progress */
+    .stats {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      font-size: 0.9rem;
+      color: #a8b2d8;
+    }
+
+    .score { font-size: 1.1rem; font-weight: bold; color: #e94560; }
+
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 4px;
+      margin-bottom: 32px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #e94560, #f5a623);
+      border-radius: 4px;
+      transition: width 0.4s ease;
+    }
+
+    /* Question card */
+    .card {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 20px;
+      padding: 40px 30px;
+      margin-bottom: 28px;
+      backdrop-filter: blur(10px);
+    }
+
+    .question {
+      font-size: 3.5rem;
+      font-weight: bold;
+      letter-spacing: 4px;
+      margin-bottom: 8px;
+    }
+
+    .hint {
+      color: #a8b2d8;
+      font-size: 0.85rem;
+      min-height: 20px;
+    }
+
+    /* Answer input */
+    .answer-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+      justify-content: center;
+    }
+
+    .input-answer {
+      width: 130px;
+      padding: 16px 12px;
+      font-size: 2rem;
+      font-weight: bold;
+      text-align: center;
+      border: 2px solid rgba(255,255,255,0.2);
+      border-radius: 14px;
+      background: rgba(255,255,255,0.07);
+      color: white;
+      outline: none;
+      transition: border-color 0.2s ease;
+    }
+
+    .input-answer:focus {
+      border-color: #e94560;
+    }
+
+    .input-answer.correct {
+      border-color: #2ed573;
+      background: rgba(46, 213, 115, 0.15);
+      animation: pulse 0.4s ease;
+    }
+
+    .input-answer.wrong {
+      border-color: #e94560;
+      background: rgba(233, 69, 96, 0.15);
+      animation: shake 0.4s ease;
+    }
+
+    .btn-submit {
+      padding: 16px 28px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      border: none;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #e94560, #f5a623);
+      color: white;
+      cursor: pointer;
+      transition: transform 0.15s ease, opacity 0.15s ease;
+    }
+
+    .btn-submit:hover:not(:disabled) {
+      transform: scale(1.05);
+    }
+
+    .btn-submit:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.07); }
+      100% { transform: scale(1); }
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-6px); }
+      75% { transform: translateX(6px); }
+    }
+
+    /* Feedback message */
+    .feedback {
+      font-size: 1.1rem;
+      font-weight: bold;
+      min-height: 28px;
+      margin-bottom: 16px;
+    }
+
+    .feedback.ok { color: #2ed573; }
+    .feedback.fail { color: #e94560; }
+
+    /* Result screen */
+    #result-screen { display: none; }
+
+    .result-emoji { font-size: 4rem; margin-bottom: 16px; }
+    .result-title { font-size: 2rem; font-weight: bold; margin-bottom: 8px; }
+    .result-score { font-size: 1.2rem; color: #a8b2d8; margin-bottom: 32px; }
+
+    .stars {
+      font-size: 2.5rem;
+      margin-bottom: 28px;
+      letter-spacing: 6px;
+    }
+
+    .btn-restart {
+      padding: 16px 40px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      background: linear-gradient(135deg, #e94560, #f5a623);
+      border: none;
+      border-radius: 50px;
+      color: white;
+      cursor: pointer;
+      transition: transform 0.2s ease, opacity 0.2s ease;
+    }
+
+    .btn-restart:hover {
+      transform: scale(1.05);
+      opacity: 0.9;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Game screen -->
+  <div id="game-screen">
+    <h1>Sumas Rapidas</h1>
+    <p class="subtitle">Escribe la respuesta correcta</p>
+
+    <div class="stats">
+      <span>Pregunta <strong id="q-num">1</strong> de 6</span>
+      <span class="score">Puntos: <span id="score">0</span></span>
+    </div>
+
+    <div class="progress-bar">
+      <div class="progress-fill" id="progress" style="width:0%"></div>
+    </div>
+
+    <div class="card">
+      <div class="question" id="question">? + ? = ?</div>
+      <div class="hint" id="hint"></div>
+    </div>
+
+    <div class="answer-row">
+      <input type="number" class="input-answer" id="answer-input" placeholder="?" min="0" autocomplete="off">
+      <button class="btn-submit" id="btn-submit" onclick="submitAnswer()">Confirmar</button>
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+  </div>
+
+  <!-- Result screen -->
+  <div id="result-screen">
+    <div class="result-emoji" id="result-emoji"></div>
+    <div class="result-title" id="result-title"></div>
+    <div class="stars" id="stars"></div>
+    <div class="result-score" id="result-score"></div>
+    <button class="btn-restart" onclick="startGame()">Jugar de nuevo</button>
+  </div>
+
+</div>
+
+<script>
+  const QUESTIONS = [
+    { a: 2, b: 3 },
+    { a: 3, b: 4 },
+    { a: 4, b: 5 },
+    { a: 5, b: 6 },
+    { a: 6, b: 7 },
+    { a: 7, b: 8 },
+  ];
+
+  let order = [];
+  let current = 0;
+  let score = 0;
+  let answered = false;
+
+  function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function startGame() {
+    order = shuffle(QUESTIONS);
+    current = 0;
+    score = 0;
+    document.getElementById('game-screen').style.display = 'block';
+    document.getElementById('result-screen').style.display = 'none';
+    showQuestion();
+  }
+
+  function showQuestion() {
+    answered = false;
+    const q = order[current];
+
+    document.getElementById('q-num').textContent = current + 1;
+    document.getElementById('score').textContent = score;
+    document.getElementById('progress').style.width = (current / QUESTIONS.length * 100) + '%';
+    document.getElementById('question').textContent = `${q.a} + ${q.b} = ?`;
+    document.getElementById('hint').textContent = '';
+    document.getElementById('feedback').textContent = '';
+    document.getElementById('feedback').className = 'feedback';
+
+    const input = document.getElementById('answer-input');
+    input.value = '';
+    input.className = 'input-answer';
+    input.disabled = false;
+    input.focus();
+
+    document.getElementById('btn-submit').disabled = false;
+  }
+
+  function submitAnswer() {
+    if (answered) return;
+
+    const input = document.getElementById('answer-input');
+    const chosen = parseInt(input.value);
+    if (isNaN(chosen)) return;
+
+    answered = true;
+    input.disabled = true;
+    document.getElementById('btn-submit').disabled = true;
+
+    const q = order[current];
+    const correct = q.a + q.b;
+    const feedback = document.getElementById('feedback');
+
+    if (chosen === correct) {
+      input.classList.add('correct');
+      score += 10;
+      document.getElementById('score').textContent = score;
+      feedback.textContent = '¡Correcto! +10 puntos';
+      feedback.className = 'feedback ok';
+    } else {
+      input.classList.add('wrong');
+      feedback.textContent = `Incorrecto. La respuesta era ${correct}`;
+      feedback.className = 'feedback fail';
+    }
+
+    setTimeout(() => {
+      current++;
+      if (current < QUESTIONS.length) {
+        showQuestion();
+      } else {
+        showResult();
+      }
+    }, 1200);
+  }
+
+  function showResult() {
+    document.getElementById('game-screen').style.display = 'none';
+    const rs = document.getElementById('result-screen');
+    rs.style.display = 'block';
+
+    const pct = score / (QUESTIONS.length * 10);
+    let emoji, title, stars;
+
+    if (pct === 1)       { emoji = '🏆'; title = '¡Perfecto!';        stars = '★★★'; }
+    else if (pct >= 0.6) { emoji = '😊'; title = '¡Bien hecho!';      stars = '★★☆'; }
+    else                 { emoji = '💪'; title = '¡Sigue practicando!'; stars = '★☆☆'; }
+
+    document.getElementById('result-emoji').textContent = emoji;
+    document.getElementById('result-title').textContent = title;
+    document.getElementById('stars').textContent = stars;
+    document.getElementById('result-score').textContent =
+      `Obtuviste ${score} de ${QUESTIONS.length * 10} puntos`;
+  }
+
+  document.getElementById('answer-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') submitAnswer();
+  });
+
+  startGame();
+</script>
+</body>
+</html>
