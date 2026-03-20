@@ -36,6 +36,16 @@
       font-size: 0.95rem;
     }
 
+    /* Start screen */
+    #start-screen { display: block; }
+
+    .start-description {
+      color: #a8b2d8;
+      margin-bottom: 48px;
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+
     /* Score & progress */
     .stats {
       display: flex;
@@ -46,6 +56,8 @@
     }
 
     .score { font-size: 1.1rem; font-weight: bold; color: #e94560; }
+
+    .timer { font-size: 1.1rem; font-weight: bold; color: #f5a623; }
 
     .progress-bar {
       width: 100%;
@@ -173,7 +185,13 @@
 
     .result-emoji { font-size: 4rem; margin-bottom: 16px; }
     .result-title { font-size: 2rem; font-weight: bold; margin-bottom: 8px; }
-    .result-score { font-size: 1.2rem; color: #a8b2d8; margin-bottom: 32px; }
+    .result-time {
+      font-size: 1.4rem;
+      font-weight: bold;
+      color: #f5a623;
+      margin-bottom: 8px;
+    }
+    .result-score { font-size: 1.1rem; color: #a8b2d8; margin-bottom: 32px; }
 
     .stars {
       font-size: 2.5rem;
@@ -181,7 +199,7 @@
       letter-spacing: 6px;
     }
 
-    .btn-restart {
+    .btn-primary {
       padding: 16px 40px;
       font-size: 1.1rem;
       font-weight: bold;
@@ -193,7 +211,7 @@
       transition: transform 0.2s ease, opacity 0.2s ease;
     }
 
-    .btn-restart:hover {
+    .btn-primary:hover {
       transform: scale(1.05);
       opacity: 0.9;
     }
@@ -202,13 +220,22 @@
 <body>
 <div class="container">
 
+  <!-- Start screen -->
+  <div id="start-screen">
+    <h1>Sumas Rapidas</h1>
+    <p class="subtitle">Practica tus cuentas</p>
+    <p class="start-description">10 preguntas. Escribe la respuesta y presiona <strong>Confirmar</strong> o <strong>Enter</strong>.<br>Tu tiempo total aparecerá al final.</p>
+    <button class="btn-primary" onclick="startGame()">Comenzar</button>
+  </div>
+
   <!-- Game screen -->
-  <div id="game-screen">
+  <div id="game-screen" style="display:none">
     <h1>Sumas Rapidas</h1>
     <p class="subtitle">Escribe la respuesta correcta</p>
 
     <div class="stats">
-      <span>Pregunta <strong id="q-num">1</strong> de 6</span>
+      <span>Pregunta <strong id="q-num">1</strong> de 10</span>
+      <span class="timer">&#9201; <span id="timer">0:00</span></span>
       <span class="score">Puntos: <span id="score">0</span></span>
     </div>
 
@@ -234,43 +261,68 @@
     <div class="result-emoji" id="result-emoji"></div>
     <div class="result-title" id="result-title"></div>
     <div class="stars" id="stars"></div>
+    <div class="result-time" id="result-time"></div>
     <div class="result-score" id="result-score"></div>
-    <button class="btn-restart" onclick="startGame()">Jugar de nuevo</button>
+    <button class="btn-primary" onclick="backToStart()">Jugar de nuevo</button>
   </div>
 
 </div>
 
 <script>
-  const QUESTIONS = [
+  const POOL = [
     { a: 2, b: 3 },
     { a: 3, b: 4 },
     { a: 4, b: 5 },
     { a: 5, b: 6 },
-    { a: 6, b: 7 },
     { a: 7, b: 8 },
+    { a: 8, b: 9 },
   ];
+  const TOTAL = 10;
+
+  function makeQuestions(n) {
+    const qs = [];
+    for (let i = 0; i < n; i++) {
+      qs.push(POOL[Math.floor(Math.random() * POOL.length)]);
+    }
+    return qs;
+  }
 
   let order = [];
   let current = 0;
   let score = 0;
   let answered = false;
+  let startTime = null;
+  let timerInterval = null;
 
-  function shuffle(arr) {
-    const a = [...arr];
-    for (let i = a.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [a[i], a[j]] = [a[j], a[i]];
-    }
-    return a;
+  function formatTime(ms) {
+    const s = Math.floor(ms / 1000);
+    const min = Math.floor(s / 60);
+    const sec = s % 60;
+    return `${min}:${sec.toString().padStart(2, '0')}`;
   }
 
   function startGame() {
-    order = shuffle(QUESTIONS);
+    order = makeQuestions(TOTAL);
     current = 0;
     score = 0;
-    document.getElementById('game-screen').style.display = 'block';
+    answered = false;
+
+    document.getElementById('start-screen').style.display = 'none';
     document.getElementById('result-screen').style.display = 'none';
+    document.getElementById('game-screen').style.display = 'block';
+
+    startTime = Date.now();
+    clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+      document.getElementById('timer').textContent = formatTime(Date.now() - startTime);
+    }, 500);
+
     showQuestion();
+  }
+
+  function backToStart() {
+    document.getElementById('result-screen').style.display = 'none';
+    document.getElementById('start-screen').style.display = 'block';
   }
 
   function showQuestion() {
@@ -279,7 +331,7 @@
 
     document.getElementById('q-num').textContent = current + 1;
     document.getElementById('score').textContent = score;
-    document.getElementById('progress').style.width = (current / QUESTIONS.length * 100) + '%';
+    document.getElementById('progress').style.width = (current / TOTAL * 100) + '%';
     document.getElementById('question').textContent = `${q.a} + ${q.b} = ?`;
     document.getElementById('hint').textContent = '';
     document.getElementById('feedback').textContent = '';
@@ -323,7 +375,7 @@
 
     setTimeout(() => {
       current++;
-      if (current < QUESTIONS.length) {
+      if (current < TOTAL) {
         showQuestion();
       } else {
         showResult();
@@ -332,29 +384,30 @@
   }
 
   function showResult() {
-    document.getElementById('game-screen').style.display = 'none';
-    const rs = document.getElementById('result-screen');
-    rs.style.display = 'block';
+    clearInterval(timerInterval);
+    const elapsed = Date.now() - startTime;
 
-    const pct = score / (QUESTIONS.length * 10);
+    document.getElementById('game-screen').style.display = 'none';
+    document.getElementById('result-screen').style.display = 'block';
+
+    const pct = score / (TOTAL * 10);
     let emoji, title, stars;
 
-    if (pct === 1)       { emoji = '🏆'; title = '¡Perfecto!';        stars = '★★★'; }
-    else if (pct >= 0.6) { emoji = '😊'; title = '¡Bien hecho!';      stars = '★★☆'; }
+    if (pct === 1)       { emoji = '🏆'; title = '¡Perfecto!';         stars = '★★★'; }
+    else if (pct >= 0.6) { emoji = '😊'; title = '¡Bien hecho!';       stars = '★★☆'; }
     else                 { emoji = '💪'; title = '¡Sigue practicando!'; stars = '★☆☆'; }
 
     document.getElementById('result-emoji').textContent = emoji;
     document.getElementById('result-title').textContent = title;
     document.getElementById('stars').textContent = stars;
+    document.getElementById('result-time').textContent = `Tiempo: ${formatTime(elapsed)}`;
     document.getElementById('result-score').textContent =
-      `Obtuviste ${score} de ${QUESTIONS.length * 10} puntos`;
+      `${score} de ${TOTAL * 10} puntos`;
   }
 
   document.getElementById('answer-input').addEventListener('keydown', e => {
     if (e.key === 'Enter') submitAnswer();
   });
-
-  startGame();
 </script>
 </body>
 </html>
