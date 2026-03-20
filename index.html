@@ -279,10 +279,29 @@
   ];
   const TOTAL = 10;
 
+  function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
   function makeQuestions(n) {
     const qs = [];
-    for (let i = 0; i < n; i++) {
-      qs.push(POOL[Math.floor(Math.random() * POOL.length)]);
+    let lastKey = null;
+    while (qs.length < n) {
+      const round = shuffle([...POOL]);
+      // If first of new round equals last of previous, swap it with another
+      if (lastKey !== null && round[0].a === lastKey) {
+        const swapIdx = round.findIndex(q => q.a !== lastKey);
+        if (swapIdx > 0) [round[0], round[swapIdx]] = [round[swapIdx], round[0]];
+      }
+      for (const q of round) {
+        if (qs.length < n) qs.push(q);
+      }
+      lastKey = round[round.length - 1].a;
     }
     return qs;
   }
