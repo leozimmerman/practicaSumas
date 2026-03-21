@@ -194,9 +194,16 @@
     .result-score { font-size: 1.1rem; color: #a8b2d8; margin-bottom: 32px; }
 
     .stars {
-      font-size: 2.5rem;
-      margin-bottom: 28px;
-      letter-spacing: 6px;
+      font-size: 2rem;
+      margin-bottom: 8px;
+      letter-spacing: 2px;
+      line-height: 1.4;
+    }
+
+    .stars-label {
+      font-size: 1rem;
+      color: #a8b2d8;
+      margin-bottom: 24px;
     }
 
     .btn-primary {
@@ -261,6 +268,7 @@
     <div class="result-emoji" id="result-emoji"></div>
     <div class="result-title" id="result-title"></div>
     <div class="stars" id="stars"></div>
+    <div class="stars-label" id="stars-label"></div>
     <div class="result-time" id="result-time"></div>
     <div class="result-score" id="result-score"></div>
     <button class="btn-primary" onclick="backToStart()">Jugar de nuevo</button>
@@ -409,19 +417,35 @@
     document.getElementById('game-screen').style.display = 'none';
     document.getElementById('result-screen').style.display = 'block';
 
-    const pct = score / (TOTAL * 10);
-    let emoji, title, stars;
+    const correct = score / 10;
+    const seconds = elapsed / 1000;
 
-    if (pct === 1)       { emoji = '🏆'; title = '¡Perfecto!';         stars = '★★★'; }
-    else if (pct >= 0.6) { emoji = '😊'; title = '¡Bien hecho!';       stars = '★★☆'; }
-    else                 { emoji = '💪'; title = '¡Sigue practicando!'; stars = '★☆☆'; }
+    // 0-7 stars from accuracy, 0-3 bonus from speed
+    const accuracyStars = correct * 0.7;
+    let timeBonus;
+    if (seconds < 80)       timeBonus = 3;
+    else if (seconds < 100) timeBonus = 2;
+    else if (seconds < 130) timeBonus = 1;
+    else                    timeBonus = 0;
+
+    const starCount = Math.min(10, Math.round(accuracyStars + timeBonus));
+    const stars = '★'.repeat(starCount) + '☆'.repeat(10 - starCount);
+
+    let emoji, title;
+    if (starCount === 10)      { emoji = '🏆'; title = '¡Perfecto!'; }
+    else if (starCount >= 8)   { emoji = '🥇'; title = '¡Excelente!'; }
+    else if (starCount >= 6)   { emoji = '😊'; title = '¡Muy bien!'; }
+    else if (starCount >= 4)   { emoji = '👍'; title = '¡Bien hecho!'; }
+    else if (starCount >= 2)   { emoji = '💪'; title = '¡Sigue practicando!'; }
+    else                       { emoji = '😅'; title = '¡Sigue intentando!'; }
 
     document.getElementById('result-emoji').textContent = emoji;
     document.getElementById('result-title').textContent = title;
     document.getElementById('stars').textContent = stars;
+    document.getElementById('stars-label').textContent = `${starCount} de 10 estrellas`;
     document.getElementById('result-time').textContent = `Tiempo: ${formatTime(elapsed)}`;
     document.getElementById('result-score').textContent =
-      `${score} de ${TOTAL * 10} puntos`;
+      `${correct} de ${TOTAL} correctas · ${score} puntos`;
   }
 
   document.getElementById('answer-input').addEventListener('keydown', e => {
