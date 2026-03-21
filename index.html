@@ -41,9 +41,56 @@
 
     .start-description {
       color: #a8b2d8;
-      margin-bottom: 48px;
+      margin-bottom: 36px;
       font-size: 1rem;
       line-height: 1.6;
+    }
+
+    .mode-label {
+      color: #a8b2d8;
+      font-size: 0.95rem;
+      margin-bottom: 16px;
+    }
+
+    .mode-buttons {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn-mode {
+      padding: 20px 32px;
+      font-size: 1.05rem;
+      font-weight: bold;
+      border: 2px solid transparent;
+      border-radius: 16px;
+      color: white;
+      cursor: pointer;
+      transition: transform 0.15s ease, opacity 0.15s ease;
+      min-width: 160px;
+    }
+
+    .btn-mode:hover {
+      transform: scale(1.05);
+      opacity: 0.9;
+    }
+
+    .btn-mode-impares {
+      background: linear-gradient(135deg, #e94560, #c0392b);
+    }
+
+    .btn-mode-pares {
+      background: linear-gradient(135deg, #0099cc, #0f3460);
+      border-color: rgba(255,255,255,0.2);
+    }
+
+    .mode-tag {
+      font-size: 0.75rem;
+      display: block;
+      opacity: 0.8;
+      margin-top: 4px;
+      font-weight: normal;
     }
 
     /* Score & progress */
@@ -232,12 +279,22 @@
     <h1>Sumas Rapidas</h1>
     <p class="subtitle">Practica tus cuentas</p>
     <p class="start-description">10 preguntas. Escribe la respuesta y presiona <strong>Confirmar</strong> o <strong>Enter</strong>.<br>Tu tiempo total aparecerá al final.</p>
-    <button class="btn-primary" onclick="startGame()">Comenzar</button>
+    <p class="mode-label">Elige un modo:</p>
+    <div class="mode-buttons">
+      <button class="btn-mode btn-mode-impares" onclick="startGame('impares')">
+        Sumas Impares
+        <span class="mode-tag">2+3, 3+4, 4+5…</span>
+      </button>
+      <button class="btn-mode btn-mode-pares" onclick="startGame('pares')">
+        Sumas Pares
+        <span class="mode-tag">2+2, 3+3, 4+4…</span>
+      </button>
+    </div>
   </div>
 
   <!-- Game screen -->
   <div id="game-screen" style="display:none">
-    <h1>Sumas Rapidas</h1>
+    <h1 id="game-title">Sumas Rapidas</h1>
     <p class="subtitle">Escribe la respuesta correcta</p>
 
     <div class="stats">
@@ -271,20 +328,33 @@
     <div class="stars-label" id="stars-label"></div>
     <div class="result-time" id="result-time"></div>
     <div class="result-score" id="result-score"></div>
-    <button class="btn-primary" onclick="backToStart()">Jugar de nuevo</button>
+    <button class="btn-primary" onclick="backToStart()">Elegir modo</button>
   </div>
 
 </div>
 
 <script>
-  const POOL = [
-    { a: 2, b: 3 },
-    { a: 3, b: 4 },
-    { a: 4, b: 5 },
-    { a: 5, b: 6 },
-    { a: 7, b: 8 },
-    { a: 8, b: 9 },
-  ];
+  const POOLS = {
+    impares: [
+      { a: 2, b: 3 },
+      { a: 3, b: 4 },
+      { a: 4, b: 5 },
+      { a: 5, b: 6 },
+      { a: 7, b: 8 },
+      { a: 8, b: 9 },
+    ],
+    pares: [
+      { a: 2, b: 2 },
+      { a: 3, b: 3 },
+      { a: 4, b: 4 },
+      { a: 5, b: 5 },
+      { a: 6, b: 6 },
+      { a: 7, b: 7 },
+      { a: 8, b: 8 },
+      { a: 9, b: 9 },
+    ],
+  };
+
   const TOTAL = 10;
 
   function shuffle(arr) {
@@ -296,12 +366,11 @@
     return a;
   }
 
-  function makeQuestions(n) {
+  function makeQuestions(pool, n) {
     const qs = [];
     let lastKey = null;
     while (qs.length < n) {
-      const round = shuffle([...POOL]);
-      // If first of new round equals last of previous, swap it with another
+      const round = shuffle([...pool]);
       if (lastKey !== null && round[0].a === lastKey) {
         const swapIdx = round.findIndex(q => q.a !== lastKey);
         if (swapIdx > 0) [round[0], round[swapIdx]] = [round[swapIdx], round[0]];
@@ -328,11 +397,15 @@
     return `${min}:${sec.toString().padStart(2, '0')}`;
   }
 
-  function startGame() {
-    order = makeQuestions(TOTAL);
+  function startGame(mode) {
+    const pool = POOLS[mode];
+    order = makeQuestions(pool, TOTAL);
     current = 0;
     score = 0;
     answered = false;
+
+    const title = mode === 'pares' ? 'Sumas Pares' : 'Sumas Impares';
+    document.getElementById('game-title').textContent = title;
 
     document.getElementById('start-screen').style.display = 'none';
     document.getElementById('result-screen').style.display = 'none';
@@ -420,7 +493,6 @@
     const correct = score / 10;
     const seconds = elapsed / 1000;
 
-    // 0-7 stars from accuracy, 0-3 bonus from speed
     const accuracyStars = correct * 0.7;
     let timeBonus;
     if (seconds < 80)       timeBonus = 3;
