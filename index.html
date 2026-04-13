@@ -85,6 +85,11 @@
       border-color: rgba(255,255,255,0.2);
     }
 
+    .btn-mode-decenas {
+      background: linear-gradient(135deg, #27ae60, #1a6b3a);
+      border-color: rgba(255,255,255,0.2);
+    }
+
     .mode-tag {
       font-size: 0.75rem;
       display: block;
@@ -289,6 +294,10 @@
         Sumas Pares
         <span class="mode-tag">2+2, 3+3, 4+4…</span>
       </button>
+      <button class="btn-mode btn-mode-decenas" onclick="startGame('decenas')">
+        Decenas
+        <span class="mode-tag">67-20, 57+30…</span>
+      </button>
     </div>
   </div>
 
@@ -334,6 +343,19 @@
 </div>
 
 <script>
+  function buildDecenasPool() {
+    const pool = [];
+    const tens = [10, 20, 30, 40, 50, 60, 70, 80, 90];
+    for (let a = 1; a <= 99; a++) {
+      if (a % 10 === 0) continue;
+      for (const b of tens) {
+        if (a + b <= 100) pool.push({ a, b, op: '+' });
+        if (a - b >= 0)   pool.push({ a, b, op: '-' });
+      }
+    }
+    return pool;
+  }
+
   const POOLS = {
     impares: [
       { a: 2, b: 3 },
@@ -353,6 +375,7 @@
       { a: 8, b: 8 },
       { a: 9, b: 9 },
     ],
+    decenas: buildDecenasPool(),
   };
 
   const TOTAL = 10;
@@ -369,16 +392,17 @@
   function makeQuestions(pool, n) {
     const qs = [];
     let lastKey = null;
+    const qKey = q => `${q.a}${q.op || '+'}`;
     while (qs.length < n) {
       const round = shuffle([...pool]);
-      if (lastKey !== null && round[0].a === lastKey) {
-        const swapIdx = round.findIndex(q => q.a !== lastKey);
+      if (lastKey !== null && qKey(round[0]) === lastKey) {
+        const swapIdx = round.findIndex(q => qKey(q) !== lastKey);
         if (swapIdx > 0) [round[0], round[swapIdx]] = [round[swapIdx], round[0]];
       }
       for (const q of round) {
         if (qs.length < n) qs.push(q);
       }
-      lastKey = round[round.length - 1].a;
+      lastKey = qKey(round[round.length - 1]);
     }
     return qs;
   }
@@ -404,7 +428,9 @@
     score = 0;
     answered = false;
 
-    const title = mode === 'pares' ? 'Sumas Pares' : 'Sumas Impares';
+    const title = mode === 'pares' ? 'Sumas Pares'
+                : mode === 'decenas' ? 'Decenas'
+                : 'Sumas Impares';
     document.getElementById('game-title').textContent = title;
 
     document.getElementById('start-screen').style.display = 'none';
@@ -432,7 +458,7 @@
     document.getElementById('q-num').textContent = current + 1;
     document.getElementById('score').textContent = score;
     document.getElementById('progress').style.width = (current / TOTAL * 100) + '%';
-    document.getElementById('question').textContent = `${q.a} + ${q.b} = ?`;
+    document.getElementById('question').textContent = `${q.a} ${q.op || '+'} ${q.b} = ?`;
     document.getElementById('hint').textContent = '';
     document.getElementById('feedback').textContent = '';
     document.getElementById('feedback').className = 'feedback';
@@ -458,7 +484,7 @@
     document.getElementById('btn-submit').disabled = true;
 
     const q = order[current];
-    const correct = q.a + q.b;
+    const correct = q.op === '-' ? q.a - q.b : q.a + q.b;
     const feedback = document.getElementById('feedback');
 
     if (chosen === correct) {
