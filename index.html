@@ -90,6 +90,11 @@
       border-color: rgba(255,255,255,0.2);
     }
 
+    .btn-mode-mixtas {
+      background: linear-gradient(135deg, #8e44ad, #4a235a);
+      border-color: rgba(255,255,255,0.2);
+    }
+
     .mode-tag {
       font-size: 0.75rem;
       display: block;
@@ -298,6 +303,10 @@
         Decenas
         <span class="mode-tag">67-20, 57+30…</span>
       </button>
+      <button class="btn-mode btn-mode-mixtas" onclick="startGame('mixtas')">
+        Sumas y Restas
+        <span class="mode-tag">3+5, 7-4, 9-2…</span>
+      </button>
     </div>
   </div>
 
@@ -343,6 +352,17 @@
 </div>
 
 <script>
+  function buildMixtasPool() {
+    const pool = [];
+    for (let a = 1; a <= 9; a++) {
+      for (let b = 1; b <= 9; b++) {
+        pool.push({ a, b, op: '+' });
+        if (a - b > 0) pool.push({ a, b, op: '-' });
+      }
+    }
+    return pool;
+  }
+
   function buildDecenasPool() {
     const pool = [];
     const tens = [10, 20, 30, 40, 50, 60, 70, 80, 90];
@@ -376,6 +396,7 @@
       { a: 9, b: 9 },
     ],
     decenas: buildDecenasPool(),
+    mixtas: buildMixtasPool(),
   };
 
   const TOTAL = 10;
@@ -428,8 +449,9 @@
     score = 0;
     answered = false;
 
-    const title = mode === 'pares' ? 'Sumas Pares'
+    const title = mode === 'pares'    ? 'Sumas Pares'
                 : mode === 'decenas' ? 'Decenas'
+                : mode === 'mixtas'  ? 'Sumas y Restas'
                 : 'Sumas Impares';
     document.getElementById('game-title').textContent = title;
 
