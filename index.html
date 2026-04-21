@@ -95,6 +95,11 @@
       border-color: rgba(255,255,255,0.2);
     }
 
+    .btn-mode-simples {
+      background: linear-gradient(135deg, #16a085, #0d6b5a);
+      border-color: rgba(255,255,255,0.2);
+    }
+
     .mode-tag {
       font-size: 0.75rem;
       display: block;
@@ -307,6 +312,10 @@
         Sumas y Restas
         <span class="mode-tag">3+5, 7-4, 9-2…</span>
       </button>
+      <button class="btn-mode btn-mode-simples" onclick="startGame('simples')">
+        S. y R. Simples
+        <span class="mode-tag">resultado 1 al 10</span>
+      </button>
     </div>
   </div>
 
@@ -352,6 +361,17 @@
 </div>
 
 <script>
+  function buildSimplesPool() {
+    const pool = [];
+    for (let a = 1; a <= 9; a++) {
+      for (let b = 1; b <= 9; b++) {
+        if (a + b <= 10) pool.push({ a, b, op: '+' });
+        if (a - b >= 1)  pool.push({ a, b, op: '-' });
+      }
+    }
+    return pool;
+  }
+
   function buildMixtasPool() {
     const pool = [];
     for (let a = 1; a <= 9; a++) {
@@ -397,6 +417,7 @@
     ],
     decenas: buildDecenasPool(),
     mixtas: buildMixtasPool(),
+    simples: buildSimplesPool(),
   };
 
   const TOTAL = 10;
@@ -452,6 +473,7 @@
     const title = mode === 'pares'    ? 'Sumas Pares'
                 : mode === 'decenas' ? 'Decenas'
                 : mode === 'mixtas'  ? 'Sumas y Restas'
+                : mode === 'simples' ? 'S. y R. Simples'
                 : 'Sumas Impares';
     document.getElementById('game-title').textContent = title;
 
